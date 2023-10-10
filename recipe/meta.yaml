@@ -1,37 +1,43 @@
-{% set version = "3.1.1a1" %}
+{% set name = "pyopengl" %}
+{% set version = "3.1.7" %}
 
 package:
-  name: pyopengl
+  name: {{ name|lower }}
   version: {{ version }}
 
 source:
-  fn: PyOpenGL-{{ version }}.tar.gz
-  url: https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-{{ version }}.tar.gz
-  sha256: c96d909b359abe3271b746bacf7e6ba52935141e2406a8f90231e4e44dfa4075
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/PyOpenGL-{{ version }}.tar.gz
+  sha256: eef31a3888e6984fd4d8e6c9961b184c9813ca82604d37fe3da80eb000a76c86
 
 build:
-  script: python setup.py install --single-version-externally-managed --record record.txt
+  script: pip install . --no-deps --no-build-isolation --ignore-installed --no-cache-dir -vv
   number: 0
+  skip: true # [win] pyopengl repacks opengl on windows.
 
 requirements:
   host:
     - setuptools
     - python
-
+    - pip
+    - wheel
   run:
     - python
 
 test:
   imports:
-    - OpenGL.GL
+    - OpenGL
+  commands:
+    - pip check
+  requires:
+    - pip
 
 about:
-  home: http://pyopengl.sourceforge.net
-  license: BSD-like
+  home: https://github.com/mcfletch/pyopengl
+  license: LicenseRef-pyopengl  # BSD-like, no spdx match
+  license_family: Other
   license_file: license.txt
   summary: Standard OpenGL bindings for Python
-  doc_url: http://pyopengl.sourceforge.net/documentation/index.html
-  doc_source_url: https://sourceforge.net/projects/pyopengl/
+  doc_url: https://mcfletch.github.io/pyopengl/documentation/index.html
   dev_url: https://github.com/mcfletch/pyopengl
 
 extra:
