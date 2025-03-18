@@ -18,6 +18,7 @@ requirements:
     - pip
     - setuptools >=42.0
     - wheel
+    - freeglut  # [win]
   run:
     - python
 
