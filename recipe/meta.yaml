@@ -1,37 +1,44 @@
-{% set version = "3.1.1a1" %}
-
+{% set name = "pyopengl" %}
+{% set version = "3.1.9" %}
 package:
-  name: pyopengl
+  name: {{ name|lower }}
   version: {{ version }}
 
 source:
-  fn: PyOpenGL-{{ version }}.tar.gz
-  url: https://pypi.python.org/packages/source/P/PyOpenGL/PyOpenGL-{{ version }}.tar.gz
-  sha256: c96d909b359abe3271b746bacf7e6ba52935141e2406a8f90231e4e44dfa4075
+  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/pyopengl-{{ version }}.tar.gz
+  sha256: 28ebd82c5f4491a418aeca9672dffb3adbe7d33b39eada4548a5b4e8c03f60c8
 
 build:
-  script: python setup.py install --single-version-externally-managed --record record.txt
   number: 0
+  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
 
 requirements:
   host:
-    - setuptools
     - python
-
+    - pip
+    - setuptools >=42.0
+    - wheel
   run:
     - python
 
 test:
   imports:
     - OpenGL.GL
+  requires:
+    - pip
+  commands:
+    - pip check
 
 about:
-  home: http://pyopengl.sourceforge.net
-  license: BSD-like
+  home: https://mcfletch.github.io/pyopengl/
+  license: LicenseRef-pyopengl
+  license_family: Other
   license_file: license.txt
   summary: Standard OpenGL bindings for Python
-  doc_url: http://pyopengl.sourceforge.net/documentation/index.html
-  doc_source_url: https://sourceforge.net/projects/pyopengl/
+  description: |
+    PyOpenGL is the most common cross platform Python binding to OpenGL and related APIs.
+    The binding is created using the standard ctypes library, and is provided under a liberal BSD-style Open-Source license.
+  doc_url: https://mcfletch.github.io/pyopengl/documentation/index.html
   dev_url: https://github.com/mcfletch/pyopengl
 
 extra:
