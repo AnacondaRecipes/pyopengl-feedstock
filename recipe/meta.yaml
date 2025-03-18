@@ -10,6 +10,10 @@ source:
 
 build:
   number: 0
+  # libgle (GLE) isn't available on win on the main channel, the upstream provides precompiled DLLs for Windows,
+  # see https://github.com/mcfletch/pyopengl/tree/master/OpenGL/DLLS,
+  # but it's not secure to include them.
+  skip: true  # [win]
   script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
 
 requirements:
@@ -18,7 +22,6 @@ requirements:
     - pip
     - setuptools >=42.0
     - wheel
-    - freeglut  # [win]
   run:
     - python
 
