@@ -26,8 +26,10 @@ requirements:
     - numpy >=2  # [py>=39]
     - numpy <2   # [py<39]
 
-# Some tests only apply to certain platforms. For instance, Windows is not expected to have an X server so GLX tests
-# don't make sense there.
+# Reasons why PyTests are disabled:
+# - CI doesn`t support GUI - failed to open display ''
+# - PAackage pygame is not in the main channel
+# - Windows is not expected to have an X server, GLX tests.
 test:
   imports:
     - OpenGL
@@ -42,12 +44,11 @@ test:
     - OpenGL.latebind
     - OpenGL.lazywrapper
     - OpenGL.logs
-    - OpenGL.osmesa  # [not win]
     - OpenGL.platform
     - OpenGL.version
     - OpenGL.wrapper
     - OpenGL.AGL
-    - OpenGL.EGL     # [not win]
+    - OpenGL.EGL  # [linux]
     - OpenGL.GL
     - OpenGL.GL.feedback
     - OpenGL.GL.framebufferobjects
@@ -58,22 +59,20 @@ test:
     - OpenGL.GL.shaders
     - OpenGL.GL.vboimplementation
     - OpenGL.GLE
-    - OpenGL.GLES1   # [not win]
-    - OpenGL.GLES2   # [not win]
-    - OpenGL.GLES3   # [not win]
+    - OpenGL.GLES1  # [linux]
     - OpenGL.GLU
     - OpenGL.GLUT
-    - OpenGL.GLX     # [not win]
-    # Needs the Tk OpenGL Widget (togl).
-    - OpenGL.Tk      # [not win]
-    - OpenGL.WGL
-  requires:
-    - pip
+    - OpenGL.GLX  # [linux]
+    - OpenGL.WGL  # [win]
   commands:
     - pip check
+    - python -c "from importlib.metadata import version; assert(version('{{ name }}')=='{{ version }}')"
+  requires:
+    - pip
+    - libegl-devel  # [linux]
 
 about:
-  home: https://mcfletch.github.io/pyopengl/
+  home: https://mcfletch.github.io/pyopengl
   license: LicenseRef-pyopengl
   license_family: Other
   license_file: license.txt
