@@ -28,7 +28,7 @@ requirements:
 
 # Reasons why PyTests are disabled:
 # - CI doesn`t support GUI - failed to open display ''
-# - PAackage pygame is not in the main channel
+# - Package pygame is not in the main channel
 # - Windows is not expected to have an X server, GLX tests.
 test:
   imports:
