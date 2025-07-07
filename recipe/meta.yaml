@@ -9,12 +9,10 @@ source:
   sha256: 28ebd82c5f4491a418aeca9672dffb3adbe7d33b39eada4548a5b4e8c03f60c8
 
 build:
-  number: 0
-  # libgle (GLE) isn't available on win on the main channel, the upstream provides precompiled DLLs for Windows,
-  # see https://github.com/mcfletch/pyopengl/tree/master/OpenGL/DLLS,
-  # but it's not secure to include them.
-  skip: true  # [win]
-  script: {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+  number: 1
+  script:
+    - {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
+    - rmdir /s /q %SP_DIR%\OpenGL\DLLS  # [win]
 
 requirements:
   host:
@@ -24,17 +22,57 @@ requirements:
     - wheel
   run:
     - python
+  run_constrained:
+    - numpy >=2  # [py>=39]
+    - numpy <2   # [py<39]
 
+# Reasons why PyTests are disabled:
+# - CI doesn`t support GUI - failed to open display ''
+# - Package pygame is not in the main channel
+# - Windows is not expected to have an X server, GLX tests.
 test:
   imports:
+    - OpenGL
+    - OpenGL.acceleratesupport
+    - OpenGL.arrays
+    - OpenGL.constants
+    - OpenGL.contextdata
+    - OpenGL.converters
+    - OpenGL.error
+    - OpenGL.extensions
+    - OpenGL.images
+    - OpenGL.latebind
+    - OpenGL.lazywrapper
+    - OpenGL.logs
+    - OpenGL.platform
+    - OpenGL.version
+    - OpenGL.wrapper
+    - OpenGL.AGL
+    - OpenGL.EGL  # [linux]
     - OpenGL.GL
-  requires:
-    - pip
+    - OpenGL.GL.feedback
+    - OpenGL.GL.framebufferobjects
+    - OpenGL.GL.glget
+    - OpenGL.GL.images
+    - OpenGL.GL.pointers
+    - OpenGL.GL.selection
+    - OpenGL.GL.shaders
+    - OpenGL.GL.vboimplementation
+    - OpenGL.GLE
+    - OpenGL.GLES1  # [linux]
+    - OpenGL.GLU
+    - OpenGL.GLUT
+    - OpenGL.GLX  # [linux]
+    - OpenGL.WGL  # [win]
   commands:
     - pip check
+    - python -c "from importlib.metadata import version; assert(version('{{ name }}')=='{{ version }}')"
+  requires:
+    - pip
+    - libegl-devel  # [linux]
 
 about:
-  home: https://mcfletch.github.io/pyopengl/
+  home: https://mcfletch.github.io/pyopengl
   license: LicenseRef-pyopengl
   license_family: Other
   license_file: license.txt
