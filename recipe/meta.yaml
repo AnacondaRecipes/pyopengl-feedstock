@@ -12,7 +12,12 @@ build:
   number: 0
   script:
     - {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
-    - rmdir /s /q %SP_DIR%\OpenGL\DLLS  # [win]
+  # Windows support disabled due to upstream binary distribution issues:
+  # - Package includes pre-compiled DLLs (gle*.dll, freeglut*.dll) built with VS2008/VS2010 (vc9/vc10) requiring MSVCR90.dll/MSVCR100.dll
+  # - These legacy runtimes are not available in modern conda environments
+  # - Removing legacy DLLs breaks compatibility guarantees
+  # - Building from source requires significant platform-specific tooling
+  skip: true  # [win]
 
 requirements:
   host:
