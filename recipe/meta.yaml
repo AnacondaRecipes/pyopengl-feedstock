@@ -1,15 +1,15 @@
 {% set name = "pyopengl" %}
-{% set version = "3.1.9" %}
+{% set version = "3.1.10" %}
 package:
   name: {{ name|lower }}
   version: {{ version }}
 
 source:
-  url: https://pypi.io/packages/source/{{ name[0] }}/{{ name }}/pyopengl-{{ version }}.tar.gz
-  sha256: 28ebd82c5f4491a418aeca9672dffb3adbe7d33b39eada4548a5b4e8c03f60c8
+  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+  sha256: c4a02d6866b54eb119c8e9b3fb04fa835a95ab802dd96607ab4cdb0012df8335
 
 build:
-  number: 1
+  number: 0
   script:
     - {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
     - rmdir /s /q %SP_DIR%\OpenGL\DLLS  # [win]
@@ -23,7 +23,9 @@ requirements:
   run:
     - python
   run_constrained:
-    - numpy >=2  # [py>=39]
+    # https://github.com/mcfletch/pyopengl/blob/3.1.10/numpy-requirements.txt
+    - numpy >=2.3  # [py>=311]
+    - numpy >=2  # [py>=39 or py<311]
     - numpy <2   # [py<39]
 
 # Reasons why PyTests are disabled:
