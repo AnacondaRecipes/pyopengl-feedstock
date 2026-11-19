@@ -5,28 +5,35 @@ package:
   version: {{ version }}
 
 source:
-  url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
-  sha256: c4a02d6866b54eb119c8e9b3fb04fa835a95ab802dd96607ab4cdb0012df8335
+  - url: https://pypi.org/packages/source/{{ name[0] }}/{{ name }}/{{ name }}-{{ version }}.tar.gz
+    sha256: c4a02d6866b54eb119c8e9b3fb04fa835a95ab802dd96607ab4cdb0012df8335
+    patches:  # [win]
+      # Anaconda: PR #177 _size() fix (sysconfig.get_platform() -> arm64 suffix) + GLUT/GLE name fallback.
+      - patches/win32-freeglut-load.patch  # [win]
+  # Anaconda: GLE 3.1.0 sources for the native Windows GLE build.
+  # GLE has no package in Anaconda main.
+  # Sources: Debian pool tarball, same hash-pinned copy as
+  # mcfletch/pyopengl-glut-binaries tools/arm64-sources.json.
+  - url: https://deb.debian.org/debian/pool/main/g/gle/gle_3.1.0.orig.tar.gz  # [win]
+    sha256: dc8a74b5632b2c3fc84d33c2bf6ee43210b71b8ddf0a3166a25aeb46620bfa27  # [win]
+    folder: gle-3.1.0                                                         # [win]
 
 build:
-  number: 0
-  script:
-    - {{ PYTHON }} -m pip install . -vv --no-deps --no-build-isolation
-  # Windows support disabled due to upstream binary distribution issues:
-  # - Package includes pre-compiled DLLs (gle*.dll, freeglut*.dll) built with VS2008/VS2010 (vc9/vc10) requiring MSVCR90.dll/MSVCR100.dll
-  # - These legacy runtimes are not available in modern conda environments
-  # - Removing legacy DLLs breaks compatibility guarantees
-  # - Building from source requires significant platform-specific tooling
-  skip: true  # [win]
+  number: 1
 
 requirements:
+  build:
+    - {{ stdlib('c') }}  # [win]
+    - {{ compiler('c') }}  # [win]
   host:
     - python
     - pip
     - setuptools >=42.0
     - wheel
+    - freeglut {{ freeglut }}  # [win]
   run:
     - python
+    - freeglut  # [win]
   run_constrained:
     # https://github.com/mcfletch/pyopengl/blob/3.1.10/numpy-requirements.txt
     - numpy >=2.3  # [py>=311]
@@ -38,6 +45,8 @@ requirements:
 # - Package pygame is not in the main channel
 # - Windows is not expected to have an X server, GLX tests.
 test:
+  files:
+    - test_win.py
   imports:
     - OpenGL
     - OpenGL.acceleratesupport
@@ -74,6 +83,9 @@ test:
   commands:
     - pip check
     - python -c "from importlib.metadata import version; assert(version('{{ name }}')=='{{ version }}')"
+    # Anaconda: run the Windows DLL verification script. Kept out of
+    # an inline `python -c` because cmd.exe mangles `%` even in quotes.
+    - python test_win.py  # [win]
   requires:
     - pip
     - libegl-devel  # [linux]
@@ -82,7 +94,11 @@ about:
   home: https://mcfletch.github.io/pyopengl
   license: LicenseRef-pyopengl
   license_family: Other
-  license_file: license.txt
+  license_file:
+    - license.txt
+    - OpenGL/DLLS/gle_COPYING  # [win]
+    - OpenGL/DLLS/gle_COPYING.src  # [win]
+    - OpenGL/DLLS/gle_AUTHORS  # [win]
   summary: Standard OpenGL bindings for Python
   description: |
     PyOpenGL is the most common cross platform Python binding to OpenGL and related APIs.

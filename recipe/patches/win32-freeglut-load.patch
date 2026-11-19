@@ -1,0 +1,69 @@
+From: Onur Bingol <obingol@anaconda.com>
+Subject: [PATCH] win32: select bundled DLL suffix from interpreter ABI (PR #177) + GLUT/GLE fallback
+
+Select the bundled DLLS suffix from sysconfig.get_platform() —
+win32 -> 32, win-amd64 -> 64, win-arm64 -> arm64 — instead of pointer
+width via platform.architecture(). ARM64 and AMD64 are both 64-bit,
+so the old code requested the AMD64 gle64/freeglut64 builds on
+native ARM64 Python, which cannot be loaded. Sysconfig describes the
+interpreter build, so AMD64 Python running under emulation still
+selects '64'. Unknown platforms stay distinct so the loader falls
+back to no optional DLL rather than trying an x86 binary.
+
+Also adds a bare 'gle' fallback so a user-provided gle.dll loads
+when no bundled DLL is installed (win-64 unvendored DLLS/) and
+makes GLUT/GLE try the system freeglut first (conda freeglut run
+dep). Needed for the win-arm64 native GLE build
+(glearm64.vc14.dll) installed by bld.bat into OpenGL/DLLS/.
+
+Status: backport of mcfletch/pyopengl#177 (unmerged upstream).
+--- a/OpenGL/platform/win32.py
++++ b/OpenGL/platform/win32.py
+@@ -1,6 +1,6 @@
+ """Windows-specific platform features"""
+ import ctypes
+-import platform
++import sysconfig
+ from OpenGL.platform import ctypesloader, baseplatform
+ import sys
+ 
+@@ -14,7 +14,15 @@
+     vc = 'vc9'
+ 
+ def _size():
+-    return platform.architecture()[0].strip( 'bits' )
++    # Anaconda: select the bundled DLL suffix from the interpreter ABI,
++    # not the pointer width (mcfletch/pyopengl#177). ARM64 and AMD64 are
++    # both 64-bit, so pointer width would wrongly request AMD64 DLLs on
++    # native win-arm64 Python. Sysconfig describes the interpreter build.
++    # This also fixes AMD64 Python running under emulation: it still
++    # selects '64'. Unknown platforms stay distinct (loader falls back
++    # to no optional DLL rather than trying an x86 binary).
++    target = sysconfig.get_platform()
++    return {'win32': '32', 'win-amd64': '64', 'win-arm64': 'arm64'}.get(target, target)
+ size = _size()
+ 
+ class Win32Platform( baseplatform.BasePlatform ):
+@@ -39,6 +47,8 @@
+             return None
+     @baseplatform.lazy_property
+     def GLUT( self ):
++        # Anaconda: try the system freeglut first (conda freeglut run dep),
++        # then the bundled 'arm64'-suffixed name on win-arm64.
+         for possible in ('freeglut%s.%s'%(size,vc,), 'glut%s.%s'%(size,vc,)):
+             # Prefer FreeGLUT if the user has installed it, fallback to the included 
+             # GLUT if it is installed
+@@ -51,7 +61,12 @@
+         return None
+     @baseplatform.lazy_property
+     def GLE( self ):
+-        for libName in ('gle%s.%s'%(size,vc,), 'opengle%s.%s'%(size,vc,)):
++        # Anaconda: on win-arm64 _size() is 'arm64', so this tries
++        # glearm64.vc14.dll -- built natively from GLE 3.1.0 by build.sh
++        # and installed into OpenGL/DLLS/. On win-64 it tries the
++        # standard gle64.vc14.dll names. Falls back to bare 'gle' for a
++        # user-provided DLL.
++        for libName in ('gle%s.%s'%(size,vc,), 'opengle%s.%s'%(size,vc,), 'gle'):
+             try:
+                 GLE = ctypesloader.loadLibrary( ctypes.cdll, libName )
+                 GLE.FunctionType = ctypes.CFUNCTYPE
