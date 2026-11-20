@@ -71,10 +71,15 @@ for %%F in ("%SRC_DIR%\OpenGL\DLLS\*.vc10.dll") do echo Removing %%F & del /q "%
 REM Also delete the VC14 prebuilts shipped in the sdist (gle/freeglut
 REM 32/64 vc14) -- we replace them with native conda-built versions.
 REM NOTE: do NOT delete gle64.vc14 / glearm64.vc14 here -- those are
-REM the natively built DLLs we just copied into OpenGL/DLLS above.
+REM the natively built DLLs we just copied into OpenGL/DLLS above,
+REM EXCEPT on win-arm64: the sdist's gle64.vc14.dll is x86-64 code
+REM and must not ship there, while the native one is glearm64.vc14.dll.
+REM The `if` below only removes gle64.vc14 on win-arm64, where the
+REM native build never produces that name.
 for %%F in ("%SRC_DIR%\OpenGL\DLLS\gle32.vc14.dll") do del /q "%%F" 2>nul
 for %%F in ("%SRC_DIR%\OpenGL\DLLS\freeglut32.vc14.dll") do del /q "%%F" 2>nul
 for %%F in ("%SRC_DIR%\OpenGL\DLLS\freeglut64.vc14.dll") do del /q "%%F" 2>nul
+if "%SUBDIR%"=="win-arm64" del /q "%SRC_DIR%\OpenGL\DLLS\gle64.vc14.dll" 2>nul
 REM Verify no legacy DLLs remain
 dir /b "%SRC_DIR%\OpenGL\DLLS" 2>nul
 
